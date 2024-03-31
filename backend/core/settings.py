@@ -1,22 +1,26 @@
+from os import environ
 from pathlib import Path
-import dotenv
-import os
+from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 PROJECT_DIR = BASE_DIR.parent
 
 STATIC_URL = "static/"
 
-dotenv.load_dotenv(PROJECT_DIR / ".eVar" / ".env")
+load_dotenv(PROJECT_DIR / ".eVar" / ".env")
 
-SECRET_KEY = os.environ.get("SECRET_KEY")
-DEBUG = True if os.environ.get("DEBUG") == "True" else False
+SECRET_KEY = environ.get("SECRET_KEY")
+DEBUG = True if environ.get("DEBUG") == "True" else False
 
 ALLOWED_HOSTS = [
     "card-games.local",
 ]
 
 INSTALLED_APPS = [
+    # custom apps
+    "user_auth",
+    # external apps
+    # django apps
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -67,10 +71,15 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 DATABASES = {
-    "dev": {},
+    "dev": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
+    },
     "prod": {},
 }
 DATABASES["default"] = DATABASES["dev"] if DEBUG else DATABASES["prod"]
+
+AUTH_USER_MODEL = "user_auth.Player"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
