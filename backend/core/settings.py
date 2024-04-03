@@ -1,6 +1,9 @@
 from os import environ
 from pathlib import Path
+from datetime import timedelta
 from dotenv import load_dotenv
+
+from rest_framework.settings import api_settings
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 PROJECT_DIR = BASE_DIR.parent
@@ -20,6 +23,9 @@ INSTALLED_APPS = [
     # custom apps
     "user_auth",
     # external apps
+    "django_extensions",
+    "rest_framework",
+    "knox",
     # django apps
     "django.contrib.admin",
     "django.contrib.auth",
@@ -69,6 +75,22 @@ AUTH_PASSWORD_VALIDATORS = [
         "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.BasicAuthentication",
+    ],
+}
+
+REST_KNOX = {
+    "SECURE_HASH_ALGORITHM": "cryptography.hazmat.primitives.hashes.SHA512",
+    "AUTH_TOKEN_CHARACTER_LENGTH": 64,
+    "TOKEN_TTL": timedelta(days=7),
+    "USER_SERIALIZER": "user_auth.serializers.UserSerializer",
+    "TOKEN_LIMIT_PER_USER": None,
+    "AUTO_REFRESH": False,
+    "EXPIRY_DATETIME_FORMAT": api_settings.DATETIME_FORMAT,
+}
 
 DATABASES = {
     "dev": {
