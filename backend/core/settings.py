@@ -16,7 +16,7 @@ SECRET_KEY = environ.get("SECRET_KEY")
 DEBUG = True if environ.get("DEBUG") == "True" else False
 
 ALLOWED_HOSTS = [
-    "card-games.local",
+    "library-system.local",
 ]
 
 INSTALLED_APPS = [
@@ -101,7 +101,7 @@ DATABASES = {
 }
 DATABASES["default"] = DATABASES["dev"] if DEBUG else DATABASES["prod"]
 
-AUTH_USER_MODEL = "user_auth.Player"
+AUTH_USER_MODEL = "user_auth.User"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 

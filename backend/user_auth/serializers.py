@@ -21,7 +21,7 @@ class UserSerializer(serializers.ModelSerializer):
     """
 
     class Meta:
-        fields = ("username", "nickname", "email")
+        fields = ("username", "first_name", "last_name", "email")
         read_only = ("username",)
         model = User
 
@@ -33,7 +33,14 @@ class UserSerializer(serializers.ModelSerializer):
 
 class RegisterationSerializer(serializers.ModelSerializer):
     class Meta:
-        fields = ("username", "nickname", "email", "password", "confirm_password")
+        fields = (
+            "username",
+            "first_name",
+            "last_name",
+            "email",
+            "password",
+            "confirm_password",
+        )
         write_only = ("password",)
         model = User
 

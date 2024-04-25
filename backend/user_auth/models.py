@@ -2,10 +2,8 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.validators import ASCIIUsernameValidator
 
-from user_auth.validators import ASCIINicknameValidator
 
-
-class Player(AbstractUser):
+class User(AbstractUser):
     """
     Replacement for the default User model in django
 
@@ -13,11 +11,10 @@ class Player(AbstractUser):
     """
 
     class Meta:
-        verbose_name = "player"
-        verbose_name_plural = "players"
+        verbose_name = "user"
+        verbose_name_plural = "users"
 
     username_validator = ASCIIUsernameValidator()
-    nickname_validator = ASCIINicknameValidator()
 
     username = models.CharField(
         max_length=150,
@@ -28,9 +25,6 @@ class Player(AbstractUser):
             "unique": "A user with that username already exists.",
         },
     )
-    nickname = models.CharField(
-        max_length=30,
-        default="",
-        help_text="Display name for your account.",
-        validators=[nickname_validator],
-    )
+
+    def __str__(self):
+        return f"{self.username} - {self.first_name} {self.last_name}"

@@ -56,7 +56,8 @@ class UserAuthViewsTestCase(APITestCase):
 
         self.main_user = User.objects.create_user(
             username="main_user",
-            nickname="main_nick",
+            first_name="main_first_name",
+            last_name="main_last_name",
             email="main_user@example.com",
             password="main_password",
         )
@@ -65,7 +66,8 @@ class UserAuthViewsTestCase(APITestCase):
 
         self.secondary_user = User.objects.create(
             username="secondary_user",
-            nickname="secondary_nick",
+            first_name="secondary_first_name",
+            last_name="secondary_last_name",
             email="secondary_user@example.com",
             password="secondary_password",
         )
@@ -77,7 +79,8 @@ class UserAuthViewsTestCase(APITestCase):
     def test_register_with_valid_data(self):
         data = {
             "username": "user",
-            "nickname": "nick",
+            "first_name": "first",
+            "last_name": "last",
             "email": "user@example.com",
             "password": "example123",
             "confirm_password": "example123",
@@ -98,7 +101,8 @@ class UserAuthViewsTestCase(APITestCase):
     def test_register_with_existing_username(self):
         data = {
             "username": self.main_user.username,
-            "nickname": self.main_user.nickname,
+            "first_name": self.main_user.first_name,
+            "last_name": self.main_user.last_name,
             "email": self.main_user.email,
             "password": self.main_user_password,
             "confirm_password": self.main_user_password,
@@ -121,7 +125,8 @@ class UserAuthViewsTestCase(APITestCase):
     def test_register_with_invalid_password(self):
         data = {
             "username": "user",
-            "nickname": "nick",
+            "first_name": "first",
+            "last_name": "last",
             "email": "user@example.com",
             "password": "12345678",
             "confirm_password": "12345678",
@@ -144,7 +149,8 @@ class UserAuthViewsTestCase(APITestCase):
     def test_register_with_non_equal_passwords(self):
         data = {
             "username": "user",
-            "nickname": "nick",
+            "first_name": "first",
+            "last_name": "last",
             "email": "user@example.com",
             "password": "example123",
             "confirm_password": "12345678",
@@ -166,7 +172,7 @@ class UserAuthViewsTestCase(APITestCase):
 
     def test_update_with_valid_data(self):
         data = {
-            "nickname": self.main_user.nickname,
+            "first_name": self.main_user.first_name,
             "email": self.main_user.email,
         }
 
@@ -182,13 +188,13 @@ class UserAuthViewsTestCase(APITestCase):
             msg="test_update_with_owner incorrect status.",
         )
         self.assertTrue(
-            "nickname" in response.data and "email" in response.data,
+            "first_name" in response.data and "email" in response.data,
             msg="test_update_with_owner incorrect return data.",
         )
 
     def test_update_with_non_owner(self):
         data = {
-            "nickname": self.main_user.nickname,
+            "first_name": self.main_user.first_name,
             "email": self.main_user.email,
         }
 
