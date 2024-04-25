@@ -1,21 +1,22 @@
 from django.contrib import admin
+from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin
 
-from user_auth.models import Player
+User = get_user_model()
 
 
-@admin.register(Player)
-class PlayerAdmin(UserAdmin):
+@admin.register(User)
+class UserAdmin(UserAdmin):
     """
-    Player model admin class.
+    User model admin class.
 
-    Allows for addition of new Player accounts
+    Allows for addition of new User accounts
     or changing the data of old accounts
     """
 
     fieldsets = (
         (None, {"fields": ("username", "password", "date_joined")}),
-        (("Personal info"), {"fields": ("nickname", "email")}),
+        (("Personal info"), {"fields": ("first_name", "last_name", "email")}),
     )
 
     add_fieldsets = (
@@ -23,16 +24,23 @@ class PlayerAdmin(UserAdmin):
             None,
             {
                 "classes": ("wide",),
-                "fields": ("username", "nickname", "email", "password1", "password2"),
+                "fields": (
+                    "username",
+                    "first_name",
+                    "last_name",
+                    "email",
+                    "password1",
+                    "password2",
+                ),
             },
         ),
     )
 
-    list_display = ("username", "nickname", "email")
+    list_display = ("username", "first_name", "last_name", "email")
     list_filter = ()
 
     readonly_fields = ("date_joined",)
 
-    search_fields = ("username", "nickname")
-    search_help_text = "Search for players by their username or nickname."
+    search_fields = ("username",)
+    search_help_text = "Search for players by their username."
     ordering = ("date_joined",)
