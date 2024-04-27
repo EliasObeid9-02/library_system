@@ -22,6 +22,7 @@ ALLOWED_HOSTS = [
 INSTALLED_APPS = [
     # custom apps
     "user_auth",
+    "library_system",
     # external apps
     "django_extensions",
     "rest_framework",
