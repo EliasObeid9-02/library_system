@@ -12,4 +12,4 @@ def get_order(edition_number: int):
         suffix = "rd"
     else:
         suffix = "th"
-    return f"{edition_number}{suffix}."
+    return f"{edition_number}{suffix}"

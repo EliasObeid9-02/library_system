@@ -1,10 +1,10 @@
 import re
 
-from django.core.validators import RegexValidator
+from django.core.validators import RegexValidator, MinValueValidator
 
 
 class NameValidator(RegexValidator):
-    regex = r"[A-Z]+"
+    regex = r"[A-Z\s\.]+"
     message = "Name must consist of only letters."
     flags = re.IGNORECASE
 
