@@ -5,7 +5,11 @@ from django.db.models.functions import Lower
 from django.contrib.auth import get_user_model
 
 from library_system import utils
-from library_system.validators import NameValidator, ISBNValidator
+from library_system.validators import (
+    NameValidator,
+    ISBNValidator,
+    MinValueValidator,
+)
 
 
 class Author(models.Model):
@@ -15,6 +19,7 @@ class Author(models.Model):
 
     class Meta:
         # the tuple (first_name, last_name) is unique
+        ordering = ["last_name", "first_name"]
         constraints = [
             models.UniqueConstraint(
                 Lower("first_name"),
@@ -46,6 +51,8 @@ class Category(models.Model):
     """
 
     class Meta:
+        verbose_name = "category"
+        verbose_name_plural = "categories"
         constraints = [
             models.UniqueConstraint(Lower("name"), name="unique_category_name")
         ]
@@ -57,7 +64,7 @@ class Category(models.Model):
     )
 
     def save(self, *args, **kwargs):
-        self.name = self.name.capitalize()
+        self.name = utils.capitalize_sentence(self.name)
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -86,7 +93,7 @@ class Publication(models.Model):
 
 class Book(models.Model):
     class Meta:
-        ordering = ["title", "pages"]
+        ordering = ["title", "-publish_date"]
 
     LANGUAGE_CHOICES = (
         ("en", "English"),
@@ -98,37 +105,53 @@ class Book(models.Model):
         ("ar", "Arabic"),
     )
 
+    positive_integer_validator = MinValueValidator(
+        limit_value=1, message="Value must be positive."
+    )
+
     isbn = models.CharField(
-        "ISBN", max_length=13, unique=True, validators=[ISBNValidator]
+        "ISBN",
+        max_length=13,
+        unique=True,
+        validators=[ISBNValidator],
+        help_text="13 character ISBN number.",
     )
     title = models.CharField(max_length=100)
-    summary = models.TextField()
-    pages = models.IntegerField()
-    edition = models.IntegerField()
+    summary = models.TextField(help_text="A short summary of the book's story.")
+    pages = models.IntegerField(default=1, validators=[positive_integer_validator])
+    edition = models.IntegerField(
+        default=1, blank=True, validators=[positive_integer_validator]
+    )
     authors = models.ManyToManyField(Author, related_name="books")
     categories = models.ManyToManyField(Category, related_name="books")
     publication = models.ForeignKey(
         Publication, related_name="books", on_delete=models.RESTRICT
     )
+    publish_date = models.DateField(default=datetime.date.today())
     language = models.CharField(max_length=2, choices=LANGUAGE_CHOICES, default="en")
 
     def display_title(self):
-        return f"{self.title} [{utils.get_order(self.edition)}]"
+        if self.edition is None:
+            return f"{self.title}"
+        return f"{self.title} [{utils.get_order(self.edition)} ed.]"
 
     def display_authors(self):
-        return ", ".join([author.name for author in self.authors.all()])
+        return ", ".join([author.display_name() for author in self.authors.all()])
 
     def display_categories(self):
         return ", ".join([category.name for category in self.categories.all()])
 
     def __str__(self):
-        return f"{self.display_authors()}: {self.title}"
+        return f"{self.display_title()} by {self.display_authors()}"
 
 
 class BookInstance(models.Model):
     """
     A copy of a book available in the library.
     """
+
+    class Meta:
+        ordering = ["due_date"]
 
     BORROW_STATUS = (
         ("M", "Maintenance"),
@@ -139,8 +162,14 @@ class BookInstance(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     book = models.ForeignKey(Book, on_delete=models.CASCADE, null=True)
-    borrower = models.ForeignKey(get_user_model(), on_delete=models.RESTRICT)
-    due_date = models.DateField(null=True, blank=True)
+    borrower = models.ForeignKey(
+        get_user_model(), on_delete=models.RESTRICT, null=True, blank=True
+    )
+    due_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Date that the borrower must return the book by. Defaults to 3 weeks after borrowing.",
+    )
     status = models.CharField(
         max_length=1, choices=BORROW_STATUS, blank=True, default="M"
     )
@@ -148,6 +177,9 @@ class BookInstance(models.Model):
     @property
     def is_overdue(self):
         return self.due_date and due_date < datetime.date.today()
+
+    def display_book(self):
+        return self.book.display_title()
 
     def __str__(self):
         return f"{self.id} {self.book.title}"
