@@ -2,6 +2,7 @@ import uuid, datetime
 
 from django.db import models
 from django.db.models.functions import Lower
+from django.utils import timezone
 from django.contrib.auth import get_user_model
 
 from library_system import utils
@@ -127,7 +128,7 @@ class Book(models.Model):
     publication = models.ForeignKey(
         Publication, related_name="books", on_delete=models.RESTRICT
     )
-    publish_date = models.DateField(default=datetime.date.today())
+    publish_date = models.DateField()
     language = models.CharField(max_length=2, choices=LANGUAGE_CHOICES, default="en")
 
     def display_title(self):
