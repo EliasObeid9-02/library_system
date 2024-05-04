@@ -31,15 +31,8 @@ class BookSerializer(serializers.ModelSerializer):
         fields = "__all__"
         model = models.Book
 
-    authors = AuthorSerializer(many=True)
-    categories = CategorySerializer(many=True)
-    publication = PublicationSerializer()
-
 
 class BookInstanceSerializer(serializers.ModelSerializer):
     class Meta:
         fields = "__all__"
         model = models.BookInstance
-
-    book = BookSerializer()
-    borrower = UserSerializer()
