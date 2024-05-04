@@ -15,7 +15,7 @@ class Review(models.Model):
             )
         ]
 
-    STAR_COUNT_CHOICES = (("1", 1), ("2", 2), ("3", 3), ("4", 4), ("5", 5))
+    STAR_COUNT_CHOICES = ((1, "1"), (2, "2"), (3, "3"), (4, "4"), (5, "5"))
 
     book = models.ForeignKey(Book, on_delete=models.CASCADE, related_name="reviews")
     author = models.ForeignKey(

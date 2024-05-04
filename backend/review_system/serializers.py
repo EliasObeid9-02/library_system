@@ -9,6 +9,3 @@ class ReviewSerializer(serializers.ModelSerializer):
     class Meta:
         fields = "__all__"
         model = Review
-
-    book = BookSerializer()
-    author = UserSerializer()
