@@ -1,100 +1,104 @@
-import uuid, datetime
+import datetime
 
 from django.db import models
 from django.db.models.functions import Lower
-from django.utils import timezone
 from django.contrib.auth import get_user_model
 
-from library_system import utils
 from library_system.validators import (
-    NameValidator,
-    ISBNValidator,
-    MinValueValidator,
+    name_validator,
+    isbn_validator,
+    positive_value_validator,
 )
+
+user_model = get_user_model()
 
 
 class Author(models.Model):
-    """
-    Book author, allows for filtering books by author
-    """
-
     class Meta:
-        # the tuple (first_name, last_name) is unique
-        ordering = ["last_name", "first_name"]
         constraints = [
             models.UniqueConstraint(
                 Lower("first_name"),
                 Lower("last_name"),
-                name="unique_author_name",
+                name="author_unique_full_name",
             )
         ]
 
-    name_validator = NameValidator()
+        indexes = [
+            models.Index(
+                fields=["first_name", "last_name"],
+                name="author_full_name_index",
+            ),
+        ]
 
-    first_name = models.CharField(max_length=40, validators=[name_validator])
-    last_name = models.CharField(max_length=40, validators=[name_validator])
+    first_name = models.CharField(
+        max_length=40,
+        validators=[name_validator],
+    )
 
-    def display_name(self):
+    last_name = models.CharField(
+        max_length=40,
+        validators=[name_validator],
+    )
+
+    @property
+    def full_name(self):
         return f"{self.first_name} {self.last_name}"
-
-    def save(self, *args, **kwargs):
-        self.first_name = self.first_name.capitalize()
-        self.last_name = self.last_name.capitalize()
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return self.display_name()
 
 
 class Category(models.Model):
-    """
-    Book category, allows for filtering books by category
-    """
-
     class Meta:
         verbose_name = "category"
         verbose_name_plural = "categories"
+
         constraints = [
-            models.UniqueConstraint(Lower("name"), name="unique_category_name")
+            models.UniqueConstraint(
+                Lower("name"),
+                name="category_unique_name",
+            )
         ]
 
-    name_validator = NameValidator()
+        indexes = [
+            models.Index(
+                fields=["name"],
+                name="category_name_index",
+            ),
+        ]
 
     name = models.CharField(
-        primary_key=True, max_length=40, validators=[name_validator]
+        max_length=40,
+        validators=[name_validator],
     )
-
-    def save(self, *args, **kwargs):
-        self.name = utils.capitalize_sentence(self.name)
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return self.name
 
 
 class Publication(models.Model):
-    """
-    Book publication, allows for filtering books by publication
-    """
-
     class Meta:
         constraints = [
-            models.UniqueConstraint(Lower("name"), name="unique_publication_name")
+            models.UniqueConstraint(
+                Lower("name"),
+                name="publication_unique_name",
+            ),
         ]
 
-    name = models.CharField(primary_key=True, max_length=40)
+        indexes = [
+            models.Index(
+                fields=["name"],
+                name="publication_name_index",
+            ),
+        ]
 
-    def save(self, *args, **kwargs):
-        self.name = utils.capitalize_sentence(self.name)
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return self.name
+    name = models.CharField(
+        max_length=40,
+    )
 
 
 class Book(models.Model):
     class Meta:
-        ordering = ["title", "-publish_date"]
+        indexes = [
+            models.Index(
+                fields=["language"],
+                name="book_language_index",
+            ),
+        ]
 
     LANGUAGE_CHOICES = (
         ("en", "English"),
@@ -106,53 +110,75 @@ class Book(models.Model):
         ("ar", "Arabic"),
     )
 
-    positive_integer_validator = MinValueValidator(
-        limit_value=1, message="Value must be positive."
-    )
-
     isbn = models.CharField(
-        "ISBN",
+        verbose_name="ISBN",
         max_length=13,
         unique=True,
-        validators=[ISBNValidator],
+        validators=[isbn_validator],
         help_text="13 character ISBN number.",
     )
-    title = models.CharField(max_length=100)
-    summary = models.TextField(help_text="A short summary of the book's story.")
-    pages = models.IntegerField(default=1, validators=[positive_integer_validator])
+
+    title = models.CharField(
+        max_length=100,
+    )
+
+    summary = models.TextField(
+        help_text="A short summary of the book's story.",
+    )
+
+    pages = models.IntegerField(
+        null=True,
+        blank=True,
+        validators=[positive_value_validator],
+    )
+
     edition = models.IntegerField(
-        default=1, blank=True, validators=[positive_integer_validator]
+        null=True,
+        blank=True,
+        validators=[positive_value_validator],
     )
-    authors = models.ManyToManyField(Author, related_name="books")
-    categories = models.ManyToManyField(Category, related_name="books")
+
+    authors = models.ManyToManyField(
+        to="Author",
+        related_name="books",
+    )
+
+    categories = models.ManyToManyField(
+        to="Category",
+        related_name="books",
+    )
+
     publication = models.ForeignKey(
-        Publication, related_name="books", on_delete=models.RESTRICT
+        to="Publication",
+        on_delete=models.PROTECT,
+        related_name="books",
     )
-    publish_date = models.DateField()
-    language = models.CharField(max_length=2, choices=LANGUAGE_CHOICES, default="en")
 
-    def display_title(self):
-        if self.edition is None:
-            return f"{self.title}"
-        return f"{self.title} [{utils.get_order(self.edition)} ed.]"
+    publish_date = models.DateField(
+        null=True,
+        blank=True,
+    )
 
-    def display_authors(self):
-        return ", ".join([author.display_name() for author in self.authors.all()])
+    language = models.CharField(
+        max_length=2,
+        choices=LANGUAGE_CHOICES,
+        default="en",
+    )
 
-    def display_categories(self):
-        return ", ".join([category.name for category in self.categories.all()])
-
-    def __str__(self):
-        return f"{self.display_title()} by {self.display_authors()}"
+    @property
+    def reviews_star_average(self):
+        stars_average = self.reviews.aggregate(models.Avg("stars", default=0))
+        return stars_average["stars__avg"]
 
 
 class BookInstance(models.Model):
-    """
-    A copy of a book available in the library.
-    """
-
     class Meta:
-        ordering = ["due_date"]
+        indexes = [
+            models.Index(
+                fields=["due_date"],
+                name="book_instance_due_date_index",
+            ),
+        ]
 
     BORROW_STATUS = (
         ("M", "Maintenance"),
@@ -161,26 +187,63 @@ class BookInstance(models.Model):
         ("A", "Available"),
     )
 
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
-    book = models.ForeignKey(Book, on_delete=models.CASCADE, null=True)
-    borrower = models.ForeignKey(
-        get_user_model(), on_delete=models.RESTRICT, null=True, blank=True
+    book = models.ForeignKey(
+        to="Book",
+        on_delete=models.CASCADE,
+        related_name="book_copies",
     )
+
+    borrower = models.ForeignKey(
+        to=user_model,
+        on_delete=models.RESTRICT,
+        related_name="borrowed_books",
+        null=True,
+        blank=True,
+    )
+
     due_date = models.DateField(
         null=True,
         blank=True,
         help_text="Date that the borrower must return the book by. Defaults to 3 weeks after borrowing.",
     )
+
     status = models.CharField(
-        max_length=1, choices=BORROW_STATUS, blank=True, default="M"
+        max_length=1,
+        choices=BORROW_STATUS,
+        blank=True,
+        default="M",
     )
 
     @property
     def is_overdue(self):
         return self.due_date and due_date < datetime.date.today()
 
-    def display_book(self):
-        return self.book.display_title()
 
-    def __str__(self):
-        return f"{self.id} {self.book.title}"
+class Review(models.Model):
+    class Meta:
+        indexes = [
+            models.Index(
+                fields=["book", "stars"],
+                name="review_book_stars_index",
+            ),
+        ]
+
+    book = models.ForeignKey(
+        to="Book",
+        on_delete=models.CASCADE,
+        related_name="reviews",
+    )
+
+    reviewer = models.ForeignKey(
+        to=user_model,
+        on_delete=models.CASCADE,
+        related_name="reviews",
+    )
+
+    stars = models.IntegerField(
+        choices=models.IntegerChoices("Stars", "ONE TWO THREE FOUR FIVE").choices,
+    )
+
+    review_text = models.TextField(
+        help_text="Write your review here.",
+    )
