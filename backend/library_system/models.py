@@ -4,6 +4,7 @@ from django.db import models
 from django.db.models.functions import Lower
 from django.contrib.auth import get_user_model
 
+from library_system.apps import app_name
 from library_system.validators import (
     name_validator,
     isbn_validator,
@@ -44,6 +45,9 @@ class Author(models.Model):
     def full_name(self):
         return f"{self.first_name} {self.last_name}"
 
+    def get_absolute_url(self):
+        return reverse(f"{app_name}:author-detail", kwargs={"pk": self.pk})
+
 
 class Category(models.Model):
     class Meta:
@@ -69,6 +73,9 @@ class Category(models.Model):
         validators=[name_validator],
     )
 
+    def get_absolute_url(self):
+        return reverse(f"{app_name}:category-detail", kwargs={"pk": self.pk})
+
 
 class Publication(models.Model):
     class Meta:
@@ -89,6 +96,9 @@ class Publication(models.Model):
     name = models.CharField(
         max_length=40,
     )
+
+    def get_absolute_url(self):
+        return reverse(f"{app_name}:publication-detail", kwargs={"pk": self.pk})
 
 
 class Book(models.Model):
@@ -170,6 +180,9 @@ class Book(models.Model):
         stars_average = self.reviews.aggregate(models.Avg("stars", default=0))
         return stars_average["stars__avg"]
 
+    def get_absolute_url(self):
+        return reverse(f"{app_name}:book-detail", kwargs={"pk": self.pk})
+
 
 class BookInstance(models.Model):
     class Meta:
@@ -218,6 +231,9 @@ class BookInstance(models.Model):
     def is_overdue(self):
         return self.due_date and due_date < datetime.date.today()
 
+    def get_absolute_url(self):
+        return reverse(f"{app_name}:book_instance-detail", kwargs={"pk": self.pk})
+
 
 class Review(models.Model):
     class Meta:
@@ -247,3 +263,6 @@ class Review(models.Model):
     review_text = models.TextField(
         help_text="Write your review here.",
     )
+
+    def get_absolute_url(self):
+        return reverse(f"{app_name}:review-detail", kwargs={"pk": self.pk})

@@ -1,6 +1,9 @@
 from django.apps import AppConfig
 
 
+app_name = "library_system"
+
+
 class LibrarySystemConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
-    name = "library_system"
+    name = app_name

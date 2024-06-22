@@ -2,6 +2,6 @@ from django.urls import path, include
 
 from rest_framework.routers import DefaultRouter
 
-from library_system import views
+from library_system import views, apps
 
-app_name = "library_system"
+app_name = apps.app_name
