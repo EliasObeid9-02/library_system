@@ -7,23 +7,23 @@ from library_system import models
 class AuthorSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Author
-        fields = ("url", "full_name", "first_name", "last_name")
-        read_only_fields = ("url", "full_name")
+        fields = ("url", "slug", "full_name", "first_name", "last_name")
+        read_only_fields = ("url", "slug", "full_name")
         write_only_fields = ("first_name", "last_name")
 
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Category
-        fields = ("url", "name")
-        read_only_fields = ("url",)
+        fields = ("url", "slug", "name")
+        read_only_fields = ("url", "slug")
 
 
 class PublicationSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Publication
-        fields = ("url", "name")
-        read_only_fields = ("url",)
+        fields = ("url", "slug", "name")
+        read_only_fields = ("url", "slug")
 
 
 class BookSerializer(serializers.HyperlinkedModelSerializer):

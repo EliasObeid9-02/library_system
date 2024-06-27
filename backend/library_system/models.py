@@ -2,6 +2,7 @@ import datetime
 
 from django.db import models
 from django.db.models.functions import Lower
+from django.template.defaultfilters import slugify
 from django.contrib.auth import get_user_model
 
 from library_system.apps import app_name
@@ -11,10 +12,24 @@ from library_system.validators import (
     positive_value_validator,
 )
 
+
 user_model = get_user_model()
 
 
-class Author(models.Model):
+class SlugMixin:
+    def create_slug(self):
+        raise NotImplementedError(
+            {f"Class {type(self).__name__}": "create_slug not implemented."}
+        )
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if not self.slug:
+            self.slug = self.create_slug()
+            self.save()
+
+
+class Author(SlugMixin, models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
@@ -41,6 +56,16 @@ class Author(models.Model):
         validators=[name_validator],
     )
 
+    slug = models.SlugField(
+        max_length=100,
+        unique=True,
+        null=False,
+    )
+
+    def create_slug(self):
+        text = f"{self.first_name} {self.last_name}_{self.id}"
+        return slugify(text)
+
     @property
     def full_name(self):
         return f"{self.first_name} {self.last_name}"
@@ -49,7 +74,7 @@ class Author(models.Model):
         return reverse(f"{app_name}:author-detail", kwargs={"pk": self.pk})
 
 
-class Category(models.Model):
+class Category(SlugMixin, models.Model):
     class Meta:
         verbose_name = "category"
         verbose_name_plural = "categories"
@@ -73,11 +98,21 @@ class Category(models.Model):
         validators=[name_validator],
     )
 
+    slug = models.SlugField(
+        max_length=60,
+        unique=True,
+        null=False,
+    )
+
+    def create_slug(self):
+        text = f"{self.name}_{self.id}"
+        return slugify(text)
+
     def get_absolute_url(self):
         return reverse(f"{app_name}:category-detail", kwargs={"pk": self.pk})
 
 
-class Publication(models.Model):
+class Publication(SlugMixin, models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
@@ -96,6 +131,16 @@ class Publication(models.Model):
     name = models.CharField(
         max_length=40,
     )
+
+    slug = models.SlugField(
+        max_length=60,
+        unique=True,
+        null=False,
+    )
+
+    def create_slug(self):
+        text = f"{self.name}_{self.id}"
+        return slugify(text)
 
     def get_absolute_url(self):
         return reverse(f"{app_name}:publication-detail", kwargs={"pk": self.pk})
