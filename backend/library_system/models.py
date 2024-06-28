@@ -70,9 +70,6 @@ class Author(SlugMixin, models.Model):
     def full_name(self):
         return f"{self.first_name} {self.last_name}"
 
-    def get_absolute_url(self):
-        return reverse(f"{app_name}:author-detail", kwargs={"pk": self.pk})
-
 
 class Category(SlugMixin, models.Model):
     class Meta:
@@ -108,9 +105,6 @@ class Category(SlugMixin, models.Model):
         text = f"{self.name}_{self.id}"
         return slugify(text)
 
-    def get_absolute_url(self):
-        return reverse(f"{app_name}:category-detail", kwargs={"pk": self.pk})
-
 
 class Publication(SlugMixin, models.Model):
     class Meta:
@@ -141,9 +135,6 @@ class Publication(SlugMixin, models.Model):
     def create_slug(self):
         text = f"{self.name}_{self.id}"
         return slugify(text)
-
-    def get_absolute_url(self):
-        return reverse(f"{app_name}:publication-detail", kwargs={"pk": self.pk})
 
 
 class Book(models.Model):
@@ -225,9 +216,6 @@ class Book(models.Model):
         stars_average = self.reviews.aggregate(models.Avg("stars", default=0))
         return stars_average["stars__avg"]
 
-    def get_absolute_url(self):
-        return reverse(f"{app_name}:book-detail", kwargs={"pk": self.pk})
-
 
 class BookInstance(models.Model):
     class Meta:
@@ -276,9 +264,6 @@ class BookInstance(models.Model):
     def is_overdue(self):
         return self.due_date and due_date < datetime.date.today()
 
-    def get_absolute_url(self):
-        return reverse(f"{app_name}:book_instance-detail", kwargs={"pk": self.pk})
-
 
 class Review(models.Model):
     class Meta:
@@ -302,12 +287,9 @@ class Review(models.Model):
     )
 
     stars = models.IntegerField(
-        choices=models.IntegerChoices("Stars", "ONE TWO THREE FOUR FIVE").choices,
+        choices=models.IntegerChoices("Stars", "1 2 3 4 5").choices,
     )
 
     review_text = models.TextField(
         help_text="Write your review here.",
     )
-
-    def get_absolute_url(self):
-        return reverse(f"{app_name}:review-detail", kwargs={"pk": self.pk})

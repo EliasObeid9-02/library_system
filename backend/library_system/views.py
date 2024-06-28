@@ -9,15 +9,18 @@ from rest_framework.mixins import (
 
 from knox.auth import TokenAuthentication
 
+from library_system.permissions import IsOwnerOrStaff
 from library_system.models import (
     Author,
     Category,
     Publication,
+    Review,
 )
 from library_system.serializers import (
     AuthorSerializer,
     CategorySerializer,
     PublicationSerializer,
+    ReviewSerializer,
 )
 
 
@@ -58,3 +61,14 @@ class PublicationViewSet(
     permission_classes = [IsAdminUser, IsAuthenticated]
     serializer_class = PublicationSerializer
     queryset = Publication.objects.all()
+
+
+class ReviewViewSet(
+    GenericViewSet,
+    CreateModelMixin,
+    RetrieveModelMixin,
+):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated, IsOwnerOrStaff]
+    serializer_class = ReviewSerializer
+    queryset = Review.objects.all()
