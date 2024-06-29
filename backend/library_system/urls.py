@@ -7,6 +7,7 @@ from library_system.views import (
     AuthorViewSet,
     CategoryViewSet,
     PublicationViewSet,
+    BookViewSet,
     ReviewViewSet,
 )
 
@@ -15,6 +16,7 @@ router = SimpleRouter()
 router.register("author", AuthorViewSet, basename="author")
 router.register("category", CategoryViewSet, basename="category")
 router.register("publication", PublicationViewSet, basename="publication")
+router.register("book", BookViewSet, basename="book")
 router.register("review", ReviewViewSet, basename="review")
 
 urlpatterns = [

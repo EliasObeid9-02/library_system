@@ -48,16 +48,42 @@ class BookSerializer(serializers.HyperlinkedModelSerializer):
         write_only_fields = ("title", "edition")
 
 
-class BookInstanceSerializer(serializers.HyperlinkedModelSerializer):
+class BookCreationSerializer(serializers.ModelSerializer):
     class Meta:
-        model = models.BookInstance
-        fields = ("url", "is_overdue", "book", "borrower", "due_date", "status")
-        read_only_fields = ("url", "is_overdue")
+        model = models.Book
+        fields = (
+            "title",
+            "edition",
+            "isbn",
+            "summary",
+            "pages",
+            "authors",
+            "categories",
+            "publication",
+            "publish_date",
+            "language",
+            "copies_count",
+        )
 
-    def validate_book(self, value):
-        if self.instance is not None:
-            raise ValidationError({"book": "this field is not updatable."})
+    copies_count = serializers.IntegerField(default=0)
+
+    def validate_copies_count(self, value):
+        if value < 0:
+            raise ValidationError(
+                {"Book Creation": "copies count must be non negative."}
+            )
         return value
+
+    def create(self, validated_data):
+        copies_count = validated_data.pop("copies_count")
+        book_data = validated_data
+        book = models.Book.objects.create(**book_data)
+        book.save()
+
+        instaces = [models.BookInstance(book=book) for _ in range(copies_count)]
+        models.BookInstance.objects.bulk_create(instances)
+
+        return book
 
 
 class ReviewSerializer(serializers.HyperlinkedModelSerializer):

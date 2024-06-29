@@ -16,6 +16,17 @@ from library_system.validators import (
 user_model = get_user_model()
 
 
+def get_order(value: int):
+    if value % 10 == 1:
+        return f"{value}st."
+    elif value % 10 == 2:
+        return f"{value}nd."
+    elif value % 10 == 3:
+        return f"{value}rd."
+    else:
+        return f"{value}th."
+
+
 class SlugMixin:
     def create_slug(self):
         raise NotImplementedError(
@@ -216,18 +227,31 @@ class Book(models.Model):
         stars_average = self.reviews.aggregate(models.Avg("stars", default=0))
         return stars_average["stars__avg"]
 
+    @property
+    def full_title(self):
+        if self.edition:
+            return f"{self.title} [{get_order(self.edition)}]"
+        return self.title
+
 
 class BookInstance(models.Model):
     class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                "book",
+                "borrower",
+                name="book_instance_unique_book_borrower",
+            )
+        ]
+
         indexes = [
             models.Index(
-                fields=["due_date"],
-                name="book_instance_due_date_index",
-            ),
+                fields=["book", "status", "borrower"],
+                name="book_instance_book_index",
+            )
         ]
 
     BORROW_STATUS = (
-        ("M", "Maintenance"),
         ("B", "Borrowed"),
         ("R", "Reserved"),
         ("A", "Available"),
@@ -257,7 +281,7 @@ class BookInstance(models.Model):
         max_length=1,
         choices=BORROW_STATUS,
         blank=True,
-        default="M",
+        default="A",
     )
 
     @property
