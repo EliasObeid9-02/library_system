@@ -81,6 +81,9 @@ class Author(SlugMixin, models.Model):
     def full_name(self):
         return f"{self.first_name} {self.last_name}"
 
+    def __str__(self):
+        return self.full_name
+
 
 class Category(SlugMixin, models.Model):
     class Meta:
@@ -116,6 +119,9 @@ class Category(SlugMixin, models.Model):
         text = f"{self.name}_{self.id}"
         return slugify(text)
 
+    def __str__(self):
+        return self.name
+
 
 class Publication(SlugMixin, models.Model):
     class Meta:
@@ -146,6 +152,9 @@ class Publication(SlugMixin, models.Model):
     def create_slug(self):
         text = f"{self.name}_{self.id}"
         return slugify(text)
+
+    def __str__(self):
+        return self.name
 
 
 class Book(models.Model):
@@ -233,6 +242,19 @@ class Book(models.Model):
             return f"{self.title} [{get_order(self.edition)}]"
         return self.title
 
+    def __str__(self):
+        return self.full_title
+
+
+class AvailableManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(status="A")
+
+
+class BorrowedManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(status="B")
+
 
 class BookInstance(models.Model):
     class Meta:
@@ -246,15 +268,22 @@ class BookInstance(models.Model):
 
         indexes = [
             models.Index(
-                fields=["book", "status", "borrower"],
-                name="book_instance_book_index",
-            )
+                fields=["status", "book"],
+                name="b-instance_status_book_index",
+            ),
+            models.Index(
+                fields=["book", "borrower"],
+                name="b-instance_book_borrower_index",
+            ),
         ]
 
+    objects = models.Manager()
+    available = AvailableManager()
+    borrowed = BorrowedManager()
+
     BORROW_STATUS = (
-        ("B", "Borrowed"),
-        ("R", "Reserved"),
         ("A", "Available"),
+        ("B", "Borrowed"),
     )
 
     book = models.ForeignKey(
@@ -288,6 +317,34 @@ class BookInstance(models.Model):
     def is_overdue(self):
         return self.due_date and due_date < datetime.date.today()
 
+    def __str__(self):
+        return f"{self.book} borrowed by {self.borrower}"
+
+
+class BookReservation(models.Model):
+    class Meta:
+        indexes = [
+            models.Index(
+                fields=["id", "book"],
+                name="b-reservation_id_book",
+            ),
+        ]
+
+    book = models.ForeignKey(
+        to="Book",
+        on_delete=models.CASCADE,
+        related_name="reservations",
+    )
+
+    borrower = models.ForeignKey(
+        to=user_model,
+        on_delete=models.CASCADE,
+        related_name="reservations",
+    )
+
+    def __str__(self):
+        return f"{self.book} to be borrowed by {self.borrower}"
+
 
 class Review(models.Model):
     class Meta:
@@ -317,3 +374,6 @@ class Review(models.Model):
     review_text = models.TextField(
         help_text="Write your review here.",
     )
+
+    def __str__(self):
+        return f"{self.book} reviewed by {self.reviewer}"

@@ -4,6 +4,10 @@ from rest_framework.validators import ValidationError
 from library_system import models
 
 
+class EmptySerializer(serializers.BaseSerializer):
+    pass
+
+
 class AuthorSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Author
@@ -31,7 +35,7 @@ class BookSerializer(serializers.HyperlinkedModelSerializer):
         model = models.Book
         fields = (
             "url",
-            "full_tile",
+            "full_title",
             "reviews_star_average",
             "title",
             "edition",
@@ -65,7 +69,7 @@ class BookCreationSerializer(serializers.ModelSerializer):
             "copies_count",
         )
 
-    copies_count = serializers.IntegerField(default=0)
+    copies_count = serializers.IntegerField(default=0, write_only=True)
 
     def validate_copies_count(self, value):
         if value < 0:
@@ -75,12 +79,13 @@ class BookCreationSerializer(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data):
+        print(validated_data)
         copies_count = validated_data.pop("copies_count")
+        print(copies_count)
         book_data = validated_data
-        book = models.Book.objects.create(**book_data)
-        book.save()
+        book = super().create(book_data)
 
-        instaces = [models.BookInstance(book=book) for _ in range(copies_count)]
+        instances = [models.BookInstance(book=book) for _ in range(copies_count)]
         models.BookInstance.objects.bulk_create(instances)
 
         return book
