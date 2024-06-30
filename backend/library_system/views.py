@@ -1,6 +1,6 @@
 import datetime
 
-from rest_framework import status
+from rest_framework import status, filters
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
@@ -14,6 +14,9 @@ from rest_framework.mixins import (
 
 from knox.auth import TokenAuthentication
 
+from django_filters.rest_framework import DjangoFilterBackend
+
+from library_system.filters import BookFilter
 from library_system.permissions import IsOwnerOrStaff
 from library_system.models import (
     Author,
@@ -83,12 +86,16 @@ class BookViewSet(
     authentication_classes = [TokenAuthentication]
     queryset = Book.objects.all()
 
-    def get_permissions(self):
-        if self.action in ("create", "update"):
-            permission_classes = [IsAdminUser, IsAuthenticated]
-        else:
-            permission_classes = [IsAuthenticated]
-        return [perm() for perm in permission_classes]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_class = BookFilter
+    ordering_fields = ["pages", "publish_date", "reviews_star_average"]
+
+    # def get_permissions(self):
+    #     if self.action in ("create", "update"):
+    #         permission_classes = [IsAdminUser, IsAuthenticated]
+    #     else:
+    #         permission_classes = [IsAuthenticated]
+    #     return [perm() for perm in permission_classes]
 
     def get_serializer_class(self):
         if self.action == "create":

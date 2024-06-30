@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     "library_system",
     # external apps
     "django_extensions",
+    "django_filters",
     "rest_framework",
     "knox",
     # django apps
