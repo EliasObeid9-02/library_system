@@ -34,6 +34,7 @@ from library_system.serializers import (
     PublicationSerializer,
     BookSerializer,
     BookCreationSerializer,
+    BookCopiesSerializer,
     ReviewSerializer,
 )
 
@@ -90,12 +91,12 @@ class BookViewSet(
     filterset_class = BookFilter
     ordering_fields = ["pages", "publish_date", "reviews_star_average"]
 
-    # def get_permissions(self):
-    #     if self.action in ("create", "update"):
-    #         permission_classes = [IsAdminUser, IsAuthenticated]
-    #     else:
-    #         permission_classes = [IsAuthenticated]
-    #     return [perm() for perm in permission_classes]
+    def get_permissions(self):
+        if self.action in ("create", "update"):
+            permission_classes = [IsAdminUser, IsAuthenticated]
+        else:
+            permission_classes = [IsAuthenticated]
+        return [perm() for perm in permission_classes]
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -106,7 +107,7 @@ class BookViewSet(
 
     @action(methods=["post"], detail=True, serializer_class=EmptySerializer)
     def borrow_book(self, request, pk=None):
-        book = Book.objects.get(pk=pk)
+        book = self.get_object()
         user = request.user
 
         if BookInstance.objects.filter(book=book, borrower=user).exists():
@@ -167,6 +168,18 @@ class BookViewSet(
         return Response(
             {"Success": "user returned the borrowed copy of the book."},
             status=status.HTTP_200_OK,
+        )
+
+    @action(
+        methods=["put", "patch"], detail=True, serializer_class=BookCopiesSerializer
+    )
+    def add_copies(self, request, pk=None):
+        book = self.get_object()
+        serializer = self.serializer_class(book, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(
+            {"Success": "created copies of the book."}, status=status.HTTP_201_CREATED
         )
 
 

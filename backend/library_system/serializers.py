@@ -79,9 +79,7 @@ class BookCreationSerializer(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data):
-        print(validated_data)
         copies_count = validated_data.pop("copies_count")
-        print(copies_count)
         book_data = validated_data
         book = super().create(book_data)
 
@@ -89,6 +87,22 @@ class BookCreationSerializer(serializers.ModelSerializer):
         models.BookInstance.objects.bulk_create(instances)
 
         return book
+
+
+class BookCopiesSerializer(serializers.Serializer):
+    copies_count = serializers.IntegerField(default=0)
+
+    def validate_copies_count(self, value):
+        if value < 0:
+            raise ValidationError({"Book Copies": "copies count must be non negative."})
+        return value
+
+    def update(self, instance, validated_data):
+        copies_count = validated_data.pop("copies_count")
+        instances = [models.BookInstance(book=instance) for _ in range(copies_count)]
+        models.BookInstance.objects.bulk_create(instances)
+
+        return instance
 
 
 class ReviewSerializer(serializers.HyperlinkedModelSerializer):
