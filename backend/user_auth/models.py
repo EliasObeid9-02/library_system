@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from django.contrib.auth.validators import ASCIIUsernameValidator
+
+from user_auth.validators import validate_username, validate_email, validate_password
 
 
 class User(AbstractUser):
@@ -16,12 +17,10 @@ class User(AbstractUser):
             ),
         ]
 
-    username_validator = ASCIIUsernameValidator()
-
     username = models.CharField(
         primary_key=True,
         max_length=150,
-        validators=[username_validator],
+        validators=[validate_username],
         error_messages={
             "unique": "A user with that username already exists.",
         },
@@ -29,9 +28,15 @@ class User(AbstractUser):
 
     email = models.EmailField(
         unique=True,
+        validators=[validate_email],
         error_messages={
             "unique": "A user with that email already exists",
         },
+    )
+
+    password = models.CharField(
+        max_length=128,
+        validators=[validate_password],
     )
 
     def promote(self):

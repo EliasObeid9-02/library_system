@@ -130,3 +130,9 @@ TIME_ZONE = "UTC"
 USE_I18N = True
 
 USE_TZ = True
+
+EMAIL_HOST = environ.get("EMAIL_HOST")
+EMAIL_HOST_USER = environ.get("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = environ.get("EMAIL_HOST_PASSWORD")
+EMAIL_PORT = environ.get("EMAIL_PORT")
+EMAIL_USE_TLS = True
