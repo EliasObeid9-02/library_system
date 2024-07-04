@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.urls import path, include
 
 api_patterns = [
-    path("", include("user_auth.urls", namespace="user_auth")),
+    path("", include("user_auth.urls")),
     path("", include("library_system.urls")),
 ]
 
