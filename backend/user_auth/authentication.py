@@ -15,17 +15,19 @@ def decode_auth_header(auth_header: str):
         except UnicodeDecodeError:
             auth_decoded = base64.b64decode(auth_header).decode("latin-1")
 
-        auth_type, userid, password = auth_decoded.split(":", 2)
+        userid, password = auth_decoded.split(":", 1)
     except:
-        msg = "Invalid basic header. Credentials not correctly base64 encoded."
+        msg = "Invalid header. Credentials not correctly base64 encoded."
         return {"Error": msg}
-    return {"Success": (auth_type, userid, password)}
+    return {"Success": (userid, password)}
 
 
 class AuthenticationMixin:
+    auth_type = b""
+
     def authenticate(self, request):
         auth = get_authorization_header(request).split()
-        if not auth or auth[0].lower() != b"basic":
+        if not auth or auth[0].lower() != self.auth_type:
             return None
 
         if len(auth) == 1:
@@ -41,15 +43,22 @@ class AuthenticationMixin:
             raise AuthenticationFailed(msg)
         return ret["Success"]
 
+    def get_auth_type(self):
+        return self.auth_type.decode("utf-8").capitalize()
+
+    def authenticate_header(self, request):
+        return f"{self.get_auth_type()} realm={self.www_authenticate_realm}"
+
 
 class UsernameAuthentication(AuthenticationMixin, BasicAuthentication):
+    auth_type = b"username"
+
     def authenticate(self, request):
         ret = super().authenticate(request)
-        auth_type, username, password = ret
-
-        if auth_type.lower() != "username":
+        if ret is None:
             return None
 
+        username, password = ret
         return self.authenticate_credentials(username, password, request)
 
     def authenticate_credentials(self, username, password, request=None):
@@ -69,13 +78,14 @@ class UsernameAuthentication(AuthenticationMixin, BasicAuthentication):
 
 
 class EmailAuthentication(AuthenticationMixin, BasicAuthentication):
+    auth_type = b"email"
+
     def authenticate(self, request):
         ret = super().authenticate(request)
-        auth_type, email, password = ret
-
-        if auth_type.lower() != "email":
+        if ret is None:
             return None
 
+        email, password = ret
         return self.authenticate_credentials(email, password, request)
 
     def authenticate_credentials(self, email, password, request=None):

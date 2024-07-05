@@ -10,7 +10,7 @@ PROJECT_DIR = BASE_DIR.parent
 
 STATIC_URL = "static/"
 
-load_dotenv(PROJECT_DIR / ".eVar" / ".env")
+load_dotenv(".env")
 
 SECRET_KEY = environ.get("SECRET_KEY")
 DEBUG = True if environ.get("DEBUG") == "True" else False
