@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import BaseUserManager
-from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth import password_validation
 
 from rest_framework import serializers
 from rest_framework.validators import ValidationError
@@ -12,10 +12,16 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserModel
         fields = ("url", "username", "email", "password", "confirm_password")
-        read_only = ("url",)
-        write_only = ("password", "confirm_password")
+        read_only_fields = ("url",)
+        extra_kwargs = {
+            "password": {"write_only": True},
+        }
 
     confirm_password = serializers.CharField(max_length=128, write_only=True)
+
+    def validate_password(self, password):
+        password_validation.validate_password(password)
+        return password
 
     def validate(self, validated_data):
         confirm_password = validated_data.pop("confirm_password")
@@ -24,14 +30,13 @@ class UserSerializer(serializers.ModelSerializer):
         return validated_data
 
 
-class PasswordChangeMixin:
+class PasswordChangeMixin(serializers.Serializer):
     new_password = serializers.CharField(max_length=128, write_only=True)
     confirm_password = serializers.CharField(max_length=128, write_only=True)
 
-    def validate_new_password(self, value):
-        if not validate_password(value):
-            raise ValidationError({"new_password": "New password is too weak."})
-        return value
+    def validate_new_password(self, new_password):
+        password_validation.validate_password(new_password)
+        return new_password
 
     def validate(self, validated_data):
         new_password = validated_data.get("new_password")
@@ -50,13 +55,17 @@ class PasswordChangeSerializer(PasswordChangeMixin, serializers.ModelSerializer)
     class Meta:
         model = UserModel
         fields = ("password", "new_password", "confirm_password")
-        write_only = ("password", "new_password", "confirm_password")
+        extra_kwargs = {
+            "password": {"write_only": True},
+            "new_password": {"write_only": True},
+            "confirm_password": {"write_only": True},
+        }
 
-    def validate_password(self, value):
-        user = self.context["request"].user
-        if not user or not user.check_password(value):
+    def validate_password(self, password):
+        user = self.context["user"]
+        if not user or not user.check_password(password):
             raise ValidationError({"password": "Password is incorrect."})
-        return value
+        return password
 
 
 class EmailChangeSerializer(serializers.ModelSerializer):
@@ -64,12 +73,15 @@ class EmailChangeSerializer(serializers.ModelSerializer):
         model = UserModel
         fields = ("email", "password")
         write_only = ("email", "password")
+        extra_kwargs = {
+            "password": {"write_only": True},
+        }
 
-    def validate_password(self, value):
-        user = self.context["request"].user
-        if not user or not user.check_password(value):
+    def validate_password(self, password):
+        user = self.context["user"]
+        if not user or not user.check_password(password):
             raise ValidationError({"password": "Password is incorrect."})
-        return value
+        return password
 
     def update(self, instance, validated_data):
         instance.email = validated_data["email"]
@@ -77,22 +89,22 @@ class EmailChangeSerializer(serializers.ModelSerializer):
         return instance
 
 
-class EmailPasswordReset(serializers.Serializer):
+class PasswordResetEmailSerializer(serializers.Serializer):
     email = serializers.EmailField(
         write_only=True,
         required=True,
     )
 
-    def validate_email(self, value):
-        value = BaseUserManager.normalize_email(value)
+    def validate_email(self, email):
+        email = BaseUserManager.normalize_email(email)
         try:
-            user = UserModel.objects.get(email=value)
+            user = UserModel.objects.get(email=email)
         except UserModel.DoesNotExist:
             raise ValidationError({"email": "No user with this email exists."})
-        return value
+        return email
 
 
-class PasswordReset(PasswordChangeMixin, serializers.ModelSerializer):
+class PasswordResetConfirmSerializer(PasswordChangeMixin, serializers.ModelSerializer):
     class Meta:
+        model = UserModel
         fields = ("new_password", "confirm_password")
-        write_only = ("new_password", "confirm_password")

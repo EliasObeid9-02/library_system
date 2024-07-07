@@ -3,6 +3,8 @@ from pathlib import Path
 from datetime import timedelta
 from dotenv import load_dotenv
 
+from django.utils import timezone
+
 from rest_framework.settings import api_settings
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -18,6 +20,11 @@ DEBUG = True if environ.get("DEBUG") == "True" else False
 ALLOWED_HOSTS = [
     "library-system.local",
 ]
+
+HOST_SETTINGS = {
+    "domain": "library-system.local:8000",
+    "protocol": "http",
+}
 
 INSTALLED_APPS = [
     # custom apps
@@ -131,8 +138,14 @@ USE_I18N = True
 
 USE_TZ = True
 
+DEFAULT_FROM_EMAIL = environ.get("DEFAULT_FROM_EMAIL")
 EMAIL_HOST = environ.get("EMAIL_HOST")
 EMAIL_HOST_USER = environ.get("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = environ.get("EMAIL_HOST_PASSWORD")
 EMAIL_PORT = environ.get("EMAIL_PORT")
 EMAIL_USE_TLS = True
+
+RESET_TOKEN_SETTINGS = {
+    "expiration_time": timezone.timedelta(hours=1),
+    "token_length": 20,
+}
