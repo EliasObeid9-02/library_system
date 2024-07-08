@@ -1,30 +1,34 @@
-from os import environ
+import environ
+
 from pathlib import Path
 from datetime import timedelta
-from dotenv import load_dotenv
 
 from django.utils import timezone
 
 from rest_framework.settings import api_settings
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 PROJECT_DIR = BASE_DIR.parent
 
 STATIC_URL = "static/"
 
-load_dotenv(".env")
+env = environ.Env()
+environ.Env.read_env(BASE_DIR / ".env")
 
-SECRET_KEY = environ.get("SECRET_KEY")
-DEBUG = True if environ.get("DEBUG") == "True" else False
-
-ALLOWED_HOSTS = [
-    "library-system.local",
-]
+SECRET_KEY = env("SECRET_KEY")
+DEBUG = True if env("DEBUG") == "True" else False
 
 HOST_SETTINGS = {
-    "domain": "library-system.local:8000",
-    "protocol": "http",
+    "domain": env("DOMAIN"),
+    "site_port": env("SITE_PORT"),
+    "protocol": env("PROTOCOL"),
 }
+
+ALLOWED_HOSTS = [
+    "0.0.0.0",
+    HOST_SETTINGS.get("domain"),
+]
 
 INSTALLED_APPS = [
     # custom apps
@@ -110,17 +114,8 @@ REST_KNOX = {
 }
 
 DATABASES = {
-    "dev": {
-        "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "NAME": environ.get("DB_NAME"),
-        "USER": environ.get("DB_USER"),
-        "PASSWORD": environ.get("DB_PASS"),
-        "HOST": environ.get("DB_HOST"),
-        "PORT": environ.get("DB_PORT"),
-    },
-    "prod": {},
+    "default": env.db(),
 }
-DATABASES["default"] = DATABASES["dev"] if DEBUG else DATABASES["prod"]
 
 AUTH_USER_MODEL = "user_auth.User"
 
@@ -138,11 +133,11 @@ USE_I18N = True
 
 USE_TZ = True
 
-DEFAULT_FROM_EMAIL = environ.get("DEFAULT_FROM_EMAIL")
-EMAIL_HOST = environ.get("EMAIL_HOST")
-EMAIL_HOST_USER = environ.get("EMAIL_HOST_USER")
-EMAIL_HOST_PASSWORD = environ.get("EMAIL_HOST_PASSWORD")
-EMAIL_PORT = environ.get("EMAIL_PORT")
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL")
+EMAIL_HOST = env("EMAIL_HOST")
+EMAIL_HOST_USER = env("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
+EMAIL_PORT = env("EMAIL_PORT")
 EMAIL_USE_TLS = True
 
 RESET_TOKEN_SETTINGS = {

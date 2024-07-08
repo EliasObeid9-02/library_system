@@ -11,6 +11,10 @@ from user_auth.validators import validate_username, validate_email, validate_pas
 from core.settings import RESET_TOKEN_SETTINGS, HOST_SETTINGS
 
 
+def get_full_url(relative):
+    return f"{HOST_SETTINGS.get('protocol')}://{HOST_SETTINGS.get('domain')}:{HOST_SETTINGS.get('port')}{url}"
+
+
 class User(AbstractUser):
     class Meta:
         indexes = [
@@ -80,7 +84,7 @@ class User(AbstractUser):
         subject = f"Password Reset Email"
         message = f"Hello,\n\n\
         We've received a password reset request for this email. Here is the link to reset the password:\n\n\
-        {HOST_SETTINGS.get("protocol")}://{HOST_SETTINGS.get("domain")}{url}"
+        {get_full_url(url)}"
         send_mail(
             subject=subject,
             from_email=None,
@@ -123,7 +127,9 @@ class ResetToken(models.Model):
 
     @classmethod
     def generate_token(cls):
-        return binascii.hexlify(os.urandom(RESET_TOKEN_SETTINGS.get("token_length"))).decode()
+        return binascii.hexlify(
+            os.urandom(RESET_TOKEN_SETTINGS.get("token_length"))
+        ).decode()
 
     @classmethod
     def generate_expire_time(cls):

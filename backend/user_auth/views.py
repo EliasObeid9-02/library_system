@@ -43,10 +43,10 @@ class UserAuthViewSet(
 
     def get_permissions(self):
         if self.action == "delete":
-            permission_classes = [IsAuthenticated, IsOwnerOrStaff]
+            self.permission_classes = [IsAuthenticated, IsOwnerOrStaff]
         else:
-            permission_classes = [IsAuthenticated]
-        return [perm() for perm in permission_classes]
+            self.permission_classes = [IsAuthenticated]
+        return [perm() for perm in self.permission_classes]
 
     @action(methods=["post"], detail=False)
     def register(self, request):
@@ -103,7 +103,7 @@ class UserAuthViewSet(
     @action(
         methods=["post"],
         detail=False,
-        permissions_classes=[AllowAny],
+        permission_classes=[AllowAny],
         serializer_class=PasswordResetEmailSerializer,
         queryset=ResetToken.objects.all(),
     )
