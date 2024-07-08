@@ -9,10 +9,13 @@ Librarians have access for adding new books, authors, categories, publications a
 ## Installing Using Docker
 
 1. Run `git clone https://github.com/EliasObeid9-02/library_system.git` to clone the repository.
-2. Copy the `.env.example` file into `.env` and edit the variables to fit your needs, the mail variables are required for the password reset methods.
-3. Run `docker compose build` to build the images.
-4. Run `docker compose up` to launch the containers.
+2. Run `cd library_system` to change into the code directory.
+3. Copy the `.env.example` file into `.env` and edit the variables to fit your needs, the mail variables are required for the password reset methods.
+4. Run `docker compose build` to build the images.
+5. Run `docker compose up` to launch the containers.
 
 To stop the containers press `Ctrl+C` and run `docker compose stop`, optionally run `docker compose down` to remove the containers.
 
 To the run the application again run `docker compose up`.
+
+To access the website use the URL `http://127.0.0.1:8000/`
